@@ -4,20 +4,28 @@ const app=express();
 const bodyParser=require('body-parser');
 const {PORT}=require('./config/server-config')
 
+const TicketController=require('./controllers/ticket-controller');
+
 // const {sendBasicEmail}=require('./service/email-service')
 
-const cron=require('node-cron')
+const jobs=require('./utils/jobs');
+
+const cron=require('node-cron');
 
 const setUpAndStartServer=()=>{
       app.listen(PORT,()=>{
 
         app.use(bodyParser.json())
         app.use(bodyParser.urlencoded({extended:true}))
-        console.log(`server started on port ${PORT}`);
+        
+          app.use('/api/v1/tickets',TicketController.create);
 
-        cron.schedule('*/1 * * * *', () => {
-          console.log('running a task every two minutes');
-        });
+        console.log(`server started on port ${PORT}`);
+        jobs();
+
+        // cron.schedule('*/1 * * * *', () => {
+        //   console.log('running a task every two minutes');
+        // });
 
         // sendBasicEmail(
         //   'rishimeditate@gmail.com',
