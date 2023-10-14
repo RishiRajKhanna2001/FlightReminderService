@@ -1,27 +1,33 @@
 const express=require('express');
-const app=express();
-
 const bodyParser=require('body-parser');
+
 const {PORT}=require('./config/server-config')
 
 const TicketController=require('./controllers/ticket-controller');
+const EmailService = require('./service/email-service');
 
 // const {sendBasicEmail}=require('./service/email-service')
 
-const jobs=require('./utils/jobs');
+// const jobs=require('./utils/jobs');
+const { subscribeMessage, createChannel } = require('./utils/messageQueue');
+const { REMINDER_BINDING_KEY } = require('./config/server-config');
 
-const cron=require('node-cron');
+// const cron=require('node-cron');
 
-const setUpAndStartServer=()=>{
-      app.listen(PORT,()=>{
+const setUpAndStartServer=async ()=>{
+  
+  const app=express();
+  app.use(bodyParser.json())
+  app.use(bodyParser.urlencoded({extended:true}))
+  
+  app.post('/api/v1/tickets', TicketController.create);
+  
+  const channel = await createChannel();
+  subscribeMessage(channel, EmailService.subscribeEvents, REMINDER_BINDING_KEY);
 
-        app.use(bodyParser.json())
-        app.use(bodyParser.urlencoded({extended:true}))
-        
-          app.use('/api/v1/tickets',TicketController.create);
-
+  app.listen(PORT,()=>{
         console.log(`server started on port ${PORT}`);
-        jobs();
+        // jobs();
 
         // cron.schedule('*/1 * * * *', () => {
         //   console.log('running a task every two minutes');
@@ -37,3 +43,7 @@ const setUpAndStartServer=()=>{
 }
 
 setUpAndStartServer();
+
+
+
+
